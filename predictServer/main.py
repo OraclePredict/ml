@@ -11,7 +11,7 @@ app = FastAPI()
 N_THREADS = 4
 RANDOM_STATE = 42
 MISSING_VALUES = [1]
-MODEL_PATH = "catboost_dota_winner_model.cbm"
+MODEL_PATH = "best_catboost_model_90.cbm"
 
 model = None
 
@@ -30,6 +30,7 @@ def startup_event():
 async def predict_endpoint(request: Request):
     data: List[Any] = await request.json()
     print("DEBUG: received data:", data)
+    data = data['features']
     if model is not None:
         if model.feature_names_ is not None:
             feature_names = list(model.feature_names_)
