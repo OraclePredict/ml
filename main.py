@@ -5,8 +5,17 @@ import numpy as np
 import pandas as pd
 from catboost import CatBoostClassifier
 import os
+from contextlib import asynccontextmanager
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    np.random.seed(RANDOM_STATE)
+    load_model()
+    yield
+    # Shutdown (if needed)
+
+app = FastAPI(lifespan=lifespan)
 
 N_THREADS = 4
 RANDOM_STATE = 42
@@ -20,11 +29,6 @@ def load_model():
     if model is None:
         model = CatBoostClassifier()
         model.load_model(MODEL_PATH)
-
-@app.on_event("startup")
-def startup_event():
-    np.random.seed(RANDOM_STATE)
-    load_model()
 
 @app.post("/predict")
 async def predict_endpoint(request: Request):
@@ -51,5 +55,9 @@ async def predict_endpoint(request: Request):
         return JSONResponse(content={"prediction": prediction, "probability": proba})
     else:
         raise RuntimeError("Model is not loaded") 
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8080) 
 
 
